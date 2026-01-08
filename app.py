@@ -322,4 +322,8 @@ def get_proof(public_id):
 if __name__ == '__main__':
     init_db()
     print("🚀 Proofly is running at http://localhost:5000")
+<<<<<<< HEAD
     app.run(debug=True, port=5000)
+=======
+    app.run(debug=True, port=5000)
+>>>>>>> 510a771b83ccc4d7fc12c276e9c6424a1e7cc6c8
