@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proofly - Proof-of-Learning Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .spinner {
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #6b7280;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-50">
+            <div class="text-center">
+                <div class="spinner mx-auto mb-4"></div>
+                <p class="text-gray-500">Loading Proofly...</p>
+            </div>
+        </div>
+
+        <!-- Auth Pages -->
+        <div id="auth-container" class="hidden min-h-screen flex items-center justify-center p-4">
+            <!-- Login Form -->
+            <div id="login-form" class="w-full max-w-md fade-in">
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl font-bold text-gray-800">📚 Proofly</h1>
+                        <p class="text-gray-500 mt-2">Track your learning journey</p>
+                    </div>
+                    
+                    <div id="login-error" class="hidden bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm"></div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="login-email" 
+                                class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition"
+                                placeholder="you@example.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input type="password" id="login-password" 
+                                class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition"
+                                placeholder="••••••••">
+                        </div>
+                        <button onclick="handleLogin()" 
+                            class="w-full bg-gray-800 text-white py-3 rounded-lg font-medium hover:bg-gray-700 transition">
+                            Sign In
+                        </button>
+                    </div>
+                    
+                    <p class="text-center mt-6 text-gray-500">
+                        Don't have an account? 
+                        <a href="#" onclick="showSignup()" class="text-gray-800 font-medium hover:underline">Sign up</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signup-form" class="hidden w-full max-w-md fade-in">
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl font-bold text-gray-800">📚 Proofly</h1>
+                        <p class="text-gray-500 mt-2">Create your account</p>
+                    </div>
+                    
+                    <div id="signup-error" class="hidden bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm"></div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                            <input type="text" id="signup-username" 
+                                class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition"
+                                placeholder="johndoe">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="signup-email" 
+                                class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition"
+                                placeholder="you@example.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input type="password" id="signup-password" 
+                                class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition"
+                                placeholder="Min 6 characters">
+                        </div>
+                        <button onclick="handleSignup()" 
+                            class="w-full bg-gray-800 text-white py-3 rounded-lg font-medium hover:bg-gray-700 transition">
+                            Create Account
+                        </button>
+                    </div>
+                    
+                    <p class="text-center mt-6 text-gray-500">
+                        Already have an account? 
+                        <a href="#" onclick="showLogin()" class="text-gray-800 font-medium hover:underline">Sign in</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard-container" class="hidden">
+            <!-- Header -->
+            <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+                <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+                    <h1 class="text-xl font-bold text-gray-800">📚 Proofly</h1>
+                    <div class="flex items-center gap-4">
+                        <span id="user-display" class="text-gray-600 text-sm"></span>
+                        <button onclick="handleLogout()" 
+                            class="text-gray-500 hover:text-gray-700 text-sm font-medium">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="max-w-6xl mx-auto px-4 py-8">
+                <!-- Skills Section -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800">Your Skills</h2>
+                        <button onclick="showAddSkillModal()" 
+                            class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Add Skill
+                        </button>
+                    </div>
+                    
+                    <div id="skills-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Skills will be rendered here -->
+                    </div>
+                    
+                    <div id="no-skills" class="hidden bg-white rounded-xl border border-gray-200 p-12 text-center">
+                        <div class="text-5xl mb-4">🎯</div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">No skills yet</h3>
+                        <p class="text-gray-500 mb-4">Start by adding a skill you're learning</p>
+                        <button onclick="showAddSkillModal()" 
+                            class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition">
+                            Add Your First Skill
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selected Skill Section -->
+                <div id="skill-detail" class="hidden fade-in">
+                    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                            <div>
+                                <h2 id="detail-skill-name" class="text-xl font-semibold text-gray-800"></h2>
+                                <p id="detail-total-time" class="text-gray-500 text-sm mt-1"></p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="copyProofLink()" 
+                                    class="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition" title="Copy proof link">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                                    </svg>
+                                </button>
+                                <button onclick="showAddEntryModal()" 
+                                    class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition">
+                                    + Log Entry
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="entries-list" class="divide-y divide-gray-100">
+                            <!-- Entries will be rendered here -->
+                        </div>
+                        
+                        <div id="no-entries" class="hidden p-12 text-center">
+                            <div class="text-4xl mb-3">📝</div>
+                            <p class="text-gray-500">No entries yet. Start logging your learning!</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Public Proof Page -->
+        <div id="proof-container" class="hidden min-h-screen bg-gray-50">
+            <div class="max-w-3xl mx-auto px-4 py-12">
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="p-8 border-b border-gray-100 text-center">
+                        <span class="text-4xl block mb-4">📚</span>
+                        <h1 id="proof-skill-name" class="text-2xl font-bold text-gray-800"></h1>
+                        <p id="proof-username" class="text-gray-500 mt-1"></p>
+                        <div id="proof-total-time" class="mt-4 inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span></span>
+                        </div>
+                    </div>
+                    
+                    <div id="proof-entries" class="divide-y divide-gray-100">
+                        <!-- Proof entries will be rendered here -->
+                    </div>
+                </div>
+                
+                <p class="text-center text-gray-400 text-sm mt-8">
+                    Powered by <span class="font-medium">Proofly</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Add Skill Modal -->
+        <div id="add-skill-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl w-full max-w-md p-6 fade-in">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Add New Skill</h3>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Skill Name</label>
+                    <input type="text" id="new-skill-name" 
+                        class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition"
+                        placeholder="e.g., Python, Web Development, Java">
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="hideAddSkillModal()" 
+                        class="flex-1 px-4 py-3 border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button onclick="handleAddSkill()" 
+                        class="flex-1 px-4 py-3 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-700 transition">
+                        Add Skill
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Entry Modal -->
+        <div id="add-entry-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl w-full max-w-md p-6 fade-in">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Log Learning Entry</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" id="entry-date" 
+                            class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Time Spent (minutes)</label>
+                        <input type="number" id="entry-time" min="1" 
+                            class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition"
+                            placeholder="e.g., 60">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">What did you study?</label>
+                        <input type="text" id="entry-studied" 
+                            class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition"
+                            placeholder="e.g., Functions and loops">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Key Takeaway</label>
+                        <textarea id="entry-takeaway" rows="2"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition resize-none"
+                            placeholder="One key thing you learned..."></textarea>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="hideAddEntryModal()" 
+                        class="flex-1 px-4 py-3 border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button onclick="handleAddEntry()" 
+                        class="flex-1 px-4 py-3 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-700 transition">
+                        Save Entry
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in">
+            <span id="toast-message"></span>
+        </div>
+    </div>
+
+    <script>
+        // ============== CONFIG ==============
+        const API_BASE = 'http://localhost:5000/api';
+        let USE_LOCAL_STORAGE = true; // Fallback mode when backend is not available
+        
+        // ============== STATE ==============
+        let currentUser = null;
+        let skills = [];
+        let selectedSkill = null;
+        let entries = [];
+
+        // ============== INITIALIZATION ==============
+        async function init() {
+            // Check if we're viewing a proof page
+            const urlParams = new URLSearchParams(window.location.search);
+            const proofId = urlParams.get('proof');
+            
+            if (proofId) {
+                await loadProofPage(proofId);
+                return;
+            }
+
+            // Check for existing session
+            await checkAuth();
+        }
+
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_BASE}/me`, { credentials: 'include' });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.user) {
+                        USE_LOCAL_STORAGE = false;
+                        currentUser = data.user;
+                        showDashboard();
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('Backend not available, using local storage mode');
+            }
+
+            // Check local storage
+            const storedUser = localStorage.getItem('proofly_user');
+            if (storedUser) {
+                currentUser = JSON.parse(storedUser);
+                showDashboard();
+            } else {
+                showAuth();
+            }
+        }
+
+        // ============== AUTH HANDLERS ==============
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            if (!email || !password) {
+                showError('login-error', 'Please fill in all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    USE_LOCAL_STORAGE = false;
+                    currentUser = data.user;
+                    showDashboard();
+                } else {
+                    showError('login-error', data.error);
+                }
+            } catch (e) {
+                // Fallback to local storage
+                const users = JSON.parse(localStorage.getItem('proofly_users') || '[]');
+                const user = users.find(u => u.email === email && u.password === password);
+                
+                if (user) {
+                    currentUser = { id: user.id, username: user.username };
+                    localStorage.setItem('proofly_user', JSON.stringify(currentUser));
+                    showDashboard();
+                } else {
+                    showError('login-error', 'Invalid email or password');
+                }
+            }
+        }
+
+        async function handleSignup() {
+            const username = document.getElementById('signup-username').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            
+            if (!username || !email || !password) {
+                showError('signup-error', 'Please fill in all fields');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showError('signup-error', 'Password must be at least 6 characters');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    USE_LOCAL_STORAGE = false;
+                    currentUser = data.user;
+                    showDashboard();
+                } else {
+                    showError('signup-error', data.error);
+                }
+            } catch (e) {
+                // Fallback to local storage
+                const users = JSON.parse(localStorage.getItem('proofly_users') || '[]');
+                
+                if (users.find(u => u.email === email)) {
+                    showError('signup-error', 'Email already exists');
+                    return;
+                }
+                
+                const newUser = {
+                    id: Date.now(),
+                    username,
+                    email,
+                    password
+                };
+                users.push(newUser);
+                localStorage.setItem('proofly_users', JSON.stringify(users));
+                
+                currentUser = { id: newUser.id, username };
+                localStorage.setItem('proofly_user', JSON.stringify(currentUser));
+                showDashboard();
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' });
+            } catch (e) {}
+            
+            localStorage.removeItem('proofly_user');
+            currentUser = null;
+            selectedSkill = null;
+            showAuth();
+        }
+
+        // ============== SKILLS HANDLERS ==============
+        async function loadSkills() {
+            try {
+                if (!USE_LOCAL_STORAGE) {
+                    const response = await fetch(`${API_BASE}/skills`, { credentials: 'include' });
+                    const data = await response.json();
+                    skills = data.skills || [];
+                } else {
+                    skills = JSON.parse(localStorage.getItem(`proofly_skills_${currentUser.id}`) || '[]');
+                    // Calculate totals for local storage
+                    skills = skills.map(skill => {
+                        const skillEntries = JSON.parse(localStorage.getItem(`proofly_entries_${skill.id}`) || '[]');
+                        return {
+                            ...skill,
+                            total_time: skillEntries.reduce((sum, e) => sum + (parseInt(e.time_spent) || 0), 0),
+                            entry_count: skillEntries.length
+                        };
+                    });
+                }
+            } catch (e) {
+                skills = JSON.parse(localStorage.getItem(`proofly_skills_${currentUser.id}`) || '[]');
+            }
+            
+            renderSkills();
+        }
+
+        async function handleAddSkill() {
+            const name = document.getElementById('new-skill-name').value.trim();
+            
+            if (!name) {
+                showToast('Please enter a skill name');
+                return;
+            }
+
+            try {
+                if (!USE_LOCAL_STORAGE) {
+                    const response = await fetch(`${API_BASE}/skills`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ name })
+                    });
+                    
+                    if (response.ok) {
+                        hideAddSkillModal();
+                        await loadSkills();
+                        showToast('Skill added successfully');
+                    }
+                } else {
+                    const newSkill = {
+                        id: Date.now(),
+                        name,
+                        public_id: Math.random().toString(36).substring(2, 10),
+                        total_time: 0,
+                        entry_count: 0
+                    };
+                    skills.push(newSkill);
+                    localStorage.setItem(`proofly_skills_${currentUser.id}`, JSON.stringify(skills));
+                    hideAddSkillModal();
+                    renderSkills();
+                    showToast('Skill added successfully');
+                }
+            } catch (e) {
+                showToast('Error adding skill');
+            }
+        }
+
+        async function deleteSkill(skillId) {
+            if (!confirm('Are you sure you want to delete this skill and all its entries?')) return;
+            
+            try {
+                if (!USE_LOCAL_STORAGE) {
+                    await fetch(`${API_BASE}/skills/${skillId}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                } else {
+                    skills = skills.filter(s => s.id !== skillId);
+                    localStorage.setItem(`proofly_skills_${currentUser.id}`, JSON.stringify(skills));
+                    localStorage.removeItem(`proofly_entries_${skillId}`);
+                }
+                
+                if (selectedSkill && selectedSkill.id === skillId) {
+                    selectedSkill = null;
+                    document.getElementById('skill-detail').classList.add('hidden');
+                }
+                
+                await loadSkills();
+                showToast('Skill deleted');
+            } catch (e) {
+                showToast('Error deleting skill');
+            }
+        }
+
+        async function selectSkill(skillId) {
+            selectedSkill = skills.find(s => s.id === skillId);
+            if (!selectedSkill) return;
+            
+            await loadEntries();
+            document.getElementById('skill-detail').classList.remove('hidden');
+            document.getElementById('detail-skill-name').textContent = selectedSkill.name;
+            document.getElementById('skill-detail').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ============== ENTRIES HANDLERS ==============
+        async function loadEntries() {
+            if (!selectedSkill) return;
+            
+            try {
+                if (!USE_LOCAL_STORAGE) {
+                    const response = await fetch(`${API_BASE}/skills/${selectedSkill.id}/entries`, { credentials: 'include' });
+                    const data = await response.json();
+                    entries = data.entries || [];
+                } else {
+                    entries = JSON.parse(localStorage.getItem(`proofly_entries_${selectedSkill.id}`) || '[]');
+                }
+            } catch (e) {
+                entries = JSON.parse(localStorage.getItem(`proofly_entries_${selectedSkill.id}`) || '[]');
+            }
+            
+            renderEntries();
+        }
+
+        async function handleAddEntry() {
+            const date = document.getElementById('entry-date').value;
+            const time_spent = parseInt(document.getElementById('entry-time').value) || 0;
+            const what_studied = document.getElementById('entry-studied').value.trim();
+            const key_takeaway = document.getElementById('entry-takeaway').value.trim();
+            
+            if (!date || !time_spent || !what_studied || !key_takeaway) {
+                showToast('Please fill in all fields');
+                return;
+            }
+
+            try {
+                if (!USE_LOCAL_STORAGE) {
+                    const response = await fetch(`${API_BASE}/skills/${selectedSkill.id}/entries`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ date, time_spent, what_studied, key_takeaway })
+                    });
+                    
+                    if (response.ok) {
+                        hideAddEntryModal();
+                        await loadEntries();
+                        await loadSkills();
+                        showToast('Entry logged successfully');
+                    }
+                } else {
+                    const newEntry = {
+                        id: Date.now(),
+                        date,
+                        time_spent,
+                        what_studied,
+                        key_takeaway
+                    };
+                    entries.unshift(newEntry);
+                    localStorage.setItem(`proofly_entries_${selectedSkill.id}`, JSON.stringify(entries));
+                    hideAddEntryModal();
+                    renderEntries();
+                    await loadSkills();
+                    showToast('Entry logged successfully');
+                }
+            } catch (e) {
+                showToast('Error adding entry');
+            }
+        }
+
+        async function deleteEntry(entryId) {
+            if (!confirm('Delete this entry?')) return;
+            
+            try {
+                if (!USE_LOCAL_STORAGE) {
+                    await fetch(`${API_BASE}/entries/${entryId}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                } else {
+                    entries = entries.filter(e => e.id !== entryId);
+                    localStorage.setItem(`proofly_entries_${selectedSkill.id}`, JSON.stringify(entries));
+                }
+                
+                await loadEntries();
+                await loadSkills();
+                showToast('Entry deleted');
+            } catch (e) {
+                showToast('Error deleting entry');
+            }
+        }
+
+        // ============== PROOF PAGE ==============
+        async function loadProofPage(publicId) {
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('proof-container').classList.remove('hidden');
+            
+            try {
+                const response = await fetch(`${API_BASE}/proof/${publicId}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    renderProofPage(data);
+                } else {
+                    // Try local storage
+                    loadLocalProofPage(publicId);
+                }
+            } catch (e) {
+                loadLocalProofPage(publicId);
+            }
+        }
+
+        function loadLocalProofPage(publicId) {
+            // Search all users' skills for the public ID
+            const allSkillsKeys = Object.keys(localStorage).filter(k => k.startsWith('proofly_skills_'));
+            
+            for (const key of allSkillsKeys) {
+                const userSkills = JSON.parse(localStorage.getItem(key) || '[]');
+                const skill = userSkills.find(s => s.public_id === publicId);
+                
+                if (skill) {
+                    const entries = JSON.parse(localStorage.getItem(`proofly_entries_${skill.id}`) || '[]');
+                    const totalTime = entries.reduce((sum, e) => sum + (parseInt(e.time_spent) || 0), 0);
+                    
+                    renderProofPage({
+                        skill: { name: skill.name, username: 'Learner' },
+                        total_time: totalTime,
+                        entries: entries.sort((a, b) => new Date(a.date) - new Date(b.date))
+                    });
+                    return;
+                }
+            }
+            
+            document.getElementById('proof-container').innerHTML = `
+                <div class="min-h-screen flex items-center justify-center">
+                    <div class="text-center">
+                        <div class="text-5xl mb-4">🔍</div>
+                        <h2 class="text-xl font-semibold text-gray-800 mb-2">Proof page not found</h2>
+                        <p class="text-gray-500">This learning proof may have been removed or doesn't exist.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProofPage(data) {
+            document.getElementById('proof-skill-name').textContent = data.skill.name;
+            document.getElementById('proof-username').textContent = `by ${data.skill.username}`;
+            document.getElementById('proof-total-time').querySelector('span').textContent = 
+                `${formatTime(data.total_time)} total`;
+            
+            const container = document.getElementById('proof-entries');
+            
+            if (data.entries.length === 0) {
+                container.innerHTML = `
+                    <div class="p-12 text-center text-gray-500">
+                        No learning entries yet.
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = data.entries.map(entry => `
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-sm text-gray-500">${formatDate(entry.date)}</span>
+                        <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                            ${entry.time_spent} min
+                        </span>
+                    </div>
+                    <h4 class="font-medium text-gray-800">${escapeHtml(entry.what_studied)}</h4>
+                    <p class="text-gray-600 text-sm mt-1">💡 ${escapeHtml(entry.key_takeaway)}</p>
+                </div>
+            `).join('');
+        }
+
+        function copyProofLink() {
+            if (!selectedSkill) return;
+            
+            const url = `${window.location.origin}${window.location.pathname}?proof=${selectedSkill.public_id}`;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Proof link copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy link');
+            });
+        }
+
+        // ============== RENDER FUNCTIONS ==============
+        function renderSkills() {
+            const container = document.getElementById('skills-list');
+            const noSkills = document.getElementById('no-skills');
+            
+            if (skills.length === 0) {
+                container.innerHTML = '';
+                noSkills.classList.remove('hidden');
+                return;
+            }
+            
+            noSkills.classList.add('hidden');
+            container.innerHTML = skills.map(skill => `
+                <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition cursor-pointer ${selectedSkill?.id === skill.id ? 'ring-2 ring-gray-400' : ''}"
+                     onclick="selectSkill(${skill.id})">
+                    <div class="flex items-start justify-between mb-3">
+                        <h3 class="font-semibold text-gray-800">${escapeHtml(skill.name)}</h3>
+                        <button onclick="event.stopPropagation(); deleteSkill(${skill.id})" 
+                            class="text-gray-400 hover:text-red-500 transition p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm text-gray-500">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            ${formatTime(skill.total_time || 0)}
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            ${skill.entry_count || 0} entries
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderEntries() {
+            const container = document.getElementById('entries-list');
+            const noEntries = document.getElementById('no-entries');
+            const totalTime = entries.reduce((sum, e) => sum + (parseInt(e.time_spent) || 0), 0);
+            
+            document.getElementById('detail-total-time').textContent = 
+                `${formatTime(totalTime)} • ${entries.length} entries`;
+            
+            if (entries.length === 0) {
+                container.innerHTML = '';
+                noEntries.classList.remove('hidden');
+                return;
+            }
+            
+            noEntries.classList.add('hidden');
+            container.innerHTML = entries.map(entry => `
+                <div class="p-5 hover:bg-gray-50 transition">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-sm text-gray-500">${formatDate(entry.date)}</span>
+                                <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                                    ${entry.time_spent} min
+                                </span>
+                            </div>
+                            <h4 class="font-medium text-gray-800">${escapeHtml(entry.what_studied)}</h4>
+                            <p class="text-gray-600 text-sm mt-1">💡 ${escapeHtml(entry.key_takeaway)}</p>
+                        </div>
+                        <button onclick="deleteEntry(${entry.id})" 
+                            class="text-gray-400 hover:text-red-500 transition p-1 ml-4">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ============== UI HELPERS ==============
+        function showAuth() {
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('auth-container').classList.remove('hidden');
+            document.getElementById('dashboard-container').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('signup-form').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('dashboard-container').classList.remove('hidden');
+            document.getElementById('user-display').textContent = `Hello, ${currentUser.username}`;
+            loadSkills();
+        }
+
+        function showLogin() {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('signup-form').classList.add('hidden');
+            clearErrors();
+        }
+
+        function showSignup() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('signup-form').classList.remove('hidden');
+            clearErrors();
+        }
+
+        function showAddSkillModal() {
+            document.getElementById('add-skill-modal').classList.remove('hidden');
+            document.getElementById('new-skill-name').value = '';
+            document.getElementById('new-skill-name').focus();
+        }
+
+        function hideAddSkillModal() {
+            document.getElementById('add-skill-modal').classList.add('hidden');
+        }
+
+        function showAddEntryModal() {
+            document.getElementById('add-entry-modal').classList.remove('hidden');
+            document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('entry-time').value = '';
+            document.getElementById('entry-studied').value = '';
+            document.getElementById('entry-takeaway').value = '';
+            document.getElementById('entry-date').focus();
+        }
+
+        function hideAddEntryModal() {
+            document.getElementById('add-entry-modal').classList.add('hidden');
+        }
+
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.classList.remove('hidden');
+        }
+
+        function clearErrors() {
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('signup-error').classList.add('hidden');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        // ============== UTILITIES ==============
+        function formatTime(minutes) {
+            if (minutes < 60) return `${minutes}m`;
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modals on backdrop click
+        document.getElementById('add-skill-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'add-skill-modal') hideAddSkillModal();
+        });
+        document.getElementById('add-entry-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'add-entry-modal') hideAddEntryModal();
+        });
+
+        // Enter key handlers
+        document.getElementById('new-skill-name').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleAddSkill();
+        });
+        document.getElementById('login-password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+        document.getElementById('signup-password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSignup();
+        });
+
+        // Initialize app
+        init();
+    </script>
+</body>
+</html>
